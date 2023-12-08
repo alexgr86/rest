@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -41,7 +42,12 @@ public class UserController {
 
     // POST: Crear usuario
     @PostMapping
-    public ResponseEntity<UserDto> createUser(@RequestBody UserDto userDto){
+    public ResponseEntity<UserDto> createUser(@RequestBody UserDto userDto, @RequestHeader Map<String, String> headers){
+
+        headers.forEach((key, value) -> {
+            System.out.print(String.format("Header '%s' = %s", key, value));
+        });
+
         return ResponseEntity.
                 status(HttpStatus.CREATED).
                 body(userService.createUser(userDto));

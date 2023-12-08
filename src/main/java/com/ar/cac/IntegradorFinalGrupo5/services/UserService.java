@@ -2,12 +2,15 @@ package com.ar.cac.IntegradorFinalGrupo5.services;
 
 import com.ar.cac.IntegradorFinalGrupo5.entities.User;
 import com.ar.cac.IntegradorFinalGrupo5.entities.dtos.UserDto;
+import com.ar.cac.IntegradorFinalGrupo5.exceptions.UserFailValidationExeption;
 import com.ar.cac.IntegradorFinalGrupo5.mappers.UserMapper;
 import com.ar.cac.IntegradorFinalGrupo5.repositories.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,22 +44,20 @@ public class UserService {
 
         User user = UserMapper.dtoTouser(userDto);
 
-        // VERIFICACION DE DATOS DUPLICADOS
-        if( !existsEmail(user) ){
-            User entitySaved = userRepository.save(user);
-            userDto = UserMapper.userToDto(entitySaved);
-            return userDto;
-
+        // Validacion de email
+        if( existsEmail(user) ){
+            throw new UserFailValidationExeption(HttpStatus.BAD_REQUEST,"Email already exists");
         }
 
-        // Devuelvo error en campo con error
-        user.setEmail("ERROR: Mail existente");
-        user.setDni("");
-        user.setAddress("");
-        user.setUsername("");
-        user.setPassword("");
+        // Validacion de caracteres de email
+        if( !emailTextOk(user.getEmail()) ){
+            throw new UserFailValidationExeption(HttpStatus.BAD_REQUEST,"Email malformed");
+        }
 
-        return UserMapper.userToDto(user);
+
+        User entitySaved = userRepository.save(user);
+        userDto = UserMapper.userToDto(entitySaved);
+        return userDto;
 
     }
 
@@ -122,7 +123,9 @@ public class UserService {
 
 
 
+    //FUNCIONES LOCALES
 
+    // Verificacion de existencia email
     public boolean existsEmail(User user){
 
         if( userRepository.findByEmail(user.getEmail()) != null ){
@@ -130,6 +133,17 @@ public class UserService {
         }
 
         return false;
+    }
+
+    // Verificacion de estructura de email
+    public boolean emailTextOk(String email){
+
+        boolean emailOk = Pattern.compile("^(.+)@(\\S+)$")
+                .matcher(email)
+                .matches();
+
+        return emailOk;
+
     }
 
 }
