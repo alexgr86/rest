@@ -1,6 +1,7 @@
 package com.ar.cac.IntegradorFinalGrupo5.mappers;
 
 import com.ar.cac.IntegradorFinalGrupo5.entities.Account;
+import com.ar.cac.IntegradorFinalGrupo5.entities.User;
 import com.ar.cac.IntegradorFinalGrupo5.entities.dtos.AccountDto;
 
 public class AccountMapper {
@@ -26,7 +27,16 @@ public class AccountMapper {
         accountDto.setCbu(account.getCbu());
         accountDto.setAlias(account.getAlias());
         accountDto.setAmount(account.getAmount());
-        accountDto.setOwner(account.getOwner());
+
+        //User
+        User user = account.getOwner();
+
+        if(user.getPassword().length() > 0 ){
+            user.setPassword("**********");
+        }else{
+            user.setPassword("");
+        }
+        accountDto.setOwner(user);
 
         return accountDto;
     }
