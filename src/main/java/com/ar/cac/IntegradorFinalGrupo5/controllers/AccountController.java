@@ -25,10 +25,20 @@ public class AccountController {
                 body(accountService.getAccounts());
     }
 
+    @GetMapping(value = "/{id}")
+    public ResponseEntity<AccountDto> getAccount(@PathVariable Long id){
+        return ResponseEntity.status(HttpStatus.OK).body(accountService.getAccountById(id));
+    }
+
     @PostMapping
     public ResponseEntity<AccountDto> createAccount(@RequestBody AccountDto dto){
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(accountService.createAccount(dto));
+    }
+
+    @PutMapping(value = "/{id}")
+    public ResponseEntity<AccountDto> updateAccount(@PathVariable Long id, @RequestBody AccountDto accountDto){
+        return ResponseEntity.status(HttpStatus.OK).body(accountService.updateAccount(id, accountDto));
     }
 
 }

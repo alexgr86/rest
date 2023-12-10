@@ -3,6 +3,8 @@ package com.ar.cac.IntegradorFinalGrupo5.services;
 import com.ar.cac.IntegradorFinalGrupo5.entities.Account;
 import com.ar.cac.IntegradorFinalGrupo5.entities.User;
 import com.ar.cac.IntegradorFinalGrupo5.entities.dtos.AccountDto;
+import com.ar.cac.IntegradorFinalGrupo5.exceptions.AccountFailValidationExeption;
+import com.ar.cac.IntegradorFinalGrupo5.exceptions.AccountNotFoundExeption;
 import com.ar.cac.IntegradorFinalGrupo5.exceptions.UserNotExistsException;
 import com.ar.cac.IntegradorFinalGrupo5.mappers.AccountMapper;
 import com.ar.cac.IntegradorFinalGrupo5.repositories.AccountRepository;
@@ -50,11 +52,21 @@ public class AccountService {
                         (HttpStatus.NOT_FOUND,
                                 "Account " + account.getOwner().getId() + " not found"));
 
+        // Busco ultimo id creado
+        Long accountId = accountRepository.getLastIdCreated().getId();
 
+        // Genero alias inicial
+        account.setAlias(createAlias(accountId + 1));
+
+        // Genero cuenta inicial
+        account.setCbu(createCbu(accountId + 1));
 
         if(user != null){
-            accountRepository.save(account);
-            return accountDto;
+
+            Account accountSaved = accountRepository.save(account);
+            accountSaved.setOwner(user);
+
+            return AccountMapper.accountToDto(accountSaved);
         }else{
             return null;
         }
@@ -72,9 +84,45 @@ public class AccountService {
         }
     }
 
+    public AccountDto updateAccount(Long id, AccountDto accountDto) {
+
+        Account accountToModify = accountRepository
+                .findById(id)
+                .orElseThrow( ()->
+                        new AccountNotFoundExeption(HttpStatus.NOT_FOUND, "Account not found id: " + id));
 
 
+        if (accountDto.getType() == null &&
+                accountDto.getCbu() == null &&
+                accountDto.getAlias() == null &&
+                accountDto.getAmount() == null) {
+            throw new AccountFailValidationExeption(HttpStatus.BAD_REQUEST, "At least one parameter is required");
+        }
+        else{
+            accountToModify.setAlias(accountDto.getAlias());
+        }
 
+        // Logica del Patch
+        if (accountDto.getAlias() != null) {
+            accountToModify.setAlias(accountDto.getAlias());
+        }
+
+        if (accountDto.getType() != null) {
+            accountToModify.setType(accountDto.getType());
+        }
+
+        if (accountDto.getCbu() != null) {
+            accountToModify.setCbu(accountDto.getCbu());
+        }
+
+        if (accountDto.getAmount() != null) {
+            accountToModify.setAmount(accountDto.getAmount());
+        }
+
+        Account accountModified = accountRepository.save(accountToModify);
+        return AccountMapper.accountToDto(accountModified);
+
+    }
 
     // FUNCIONES INTERNAS
     private boolean accountExist(Account account){
@@ -87,5 +135,14 @@ public class AccountService {
 
     }
 
+    private String createAlias(Long id){
+
+        return "alias.created.automated." + id;
+    }
+
+    private String createCbu(Long id){
+
+        return "0000-001-0000-00" + id;
+    }
 
 }
